@@ -1,0 +1,7 @@
+{
+  "space": "<space-id>",
+  "track": {
+    "workLog": true,
+    "commitTrailer": true
+  }
+}
