@@ -139,6 +139,7 @@ Use only tools the connected server exposes; resolve by capability if a prefix d
 | Connect a cold clone (membership) | `naumu_resolve_admission`, `naumu_admission_status` |
 
 - `naumu_admission_status(graphId)` - for a member: current whitelist, domain wildcards, and pending join-request count/list. Use to check who is waiting.
+- `naumu_whoami` - identity, plus on newer servers a `graphs[]` list (each entry carries a `kind` of `personal` or `team` and an `isPersonalDefault` flag). When the list is present, use it to pick which space to use (a `team` space, not the personal default) without a second call; if a server omits the list, fall back to `naumu_list_graphs`.
 
 ## Copy guidelines (all Naumu-facing output)
 
