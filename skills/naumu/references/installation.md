@@ -45,8 +45,8 @@ If the response is `request-created` (or `request-pending`) with `reason: seat-l
 
 Tell the agent's own harness to add the remote server; the agent knows which harness it is running in.
 
-- Claude Code: `claude mcp add --transport http naumu https://naumu.ai/api/mcp`
-- Cursor: add a remote MCP entry pointing at `https://naumu.ai/api/mcp` in the MCP settings (`.cursor/mcp.json`); OAuth completes in the browser.
+- Claude Code: `claude mcp add --transport http --scope user naumu https://naumu.ai/api/mcp`. Keep `--scope user`; without it the server is registered only for the current directory. Config is read at startup, so a new session is needed before `/mcp` lists it.
+- Cursor: add a remote MCP entry pointing at `https://naumu.ai/api/mcp` in the MCP settings - use the global `~/.cursor/mcp.json` so it applies to every project, rather than a repo-local `.cursor/mcp.json`; OAuth completes in the browser.
 - Codex: `codex mcp add naumu --transport http https://naumu.ai/api/mcp`. If the harness cannot complete browser OAuth, fall back to the API-key + stdio path (see Fallback).
 - Other harnesses: use the equivalent "add remote/HTTP MCP" command with the same URL.
 
