@@ -46,8 +46,9 @@ Do NOT use `naumu_ask` for the reflex. `naumu_ask` runs the full @Naumu agent an
 
 When a unit of work is done (or hits a milestone worth recording), post a short work-log entry into the space so reviewers and future agents can find it.
 
-- Preferred: `naumu_delegate` with the space id and a bulleted task describing what was done. This records the work and lets @Naumu file/relate it. On a first entry it returns a `threadId`; reuse that same `threadId` for later updates on the same task rather than opening new threads.
-- Alternative when you only need to append a plain note to an existing thread without summoning the agent: `naumu_post_message`.
+- The one rule: every work-log post must summon @Naumu, because only a summoned @Naumu commits the entry to the graph. A message that merely lands in the thread is not recorded (verified failure, 2026-08-18: four follow-up entries appended without a summon, zero graph writes). Work-log threads do not auto-respond by default, so never rely on that.
+- Two tools satisfy it: `naumu_delegate` (space id + bulleted task; summons @Naumu on its own) or `naumu_post_message` with `invokeAgent: true` (`threadId` + content). Either is fine; what matters is that the summon is on. If the connected server's `naumu_post_message` has no `invokeAgent` argument, it predates this skill - use `naumu_delegate` there.
+- First entry: `naumu_delegate` returns a `threadId`; reuse that same `threadId` for later updates on the same task rather than opening new threads.
 - Keep entries bulleted and short (one bullet per concrete change), never a wall of prose - a human scrolls these.
 - Honor `.naumu` `tracking.topic`: file the entry under that topic. If the `tracking` block is absent, skip work-log writes entirely (the team opted out of the exhaust).
 
@@ -88,7 +89,8 @@ Use only tools the connected server exposes; resolve by capability if a prefix d
 | Identity / spaces | `naumu_whoami`, `naumu_list_graphs`, `naumu_list_topics` |
 | Fast pre-task retrieval | `naumu_search`, then `naumu_read_thread` on a specific thread |
 | Explicit question of the space (slow, on request only) | `naumu_ask` |
-| Record work / hand over a mutation | `naumu_delegate` (append plain note: `naumu_post_message`) |
+| Record work / hand over a mutation (new thread or follow-up) | `naumu_delegate`, or `naumu_post_message` with `invokeAgent: true` - the summon is what commits the entry |
+| Reply to a human in a thread without summoning @Naumu | `naumu_post_message` (no `invokeAgent`) |
 | Connect a cold clone (membership) | `naumu_resolve_admission`, `naumu_admission_status` |
 
 - `naumu_admission_status(graphId)` - for a member: current whitelist, domain wildcards, and pending join-request count/list. Use to check who is waiting.
