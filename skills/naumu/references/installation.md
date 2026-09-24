@@ -47,7 +47,7 @@ Tell the agent's own harness to add the remote server; the agent knows which har
 
 - Claude Code: `claude mcp add --transport http --scope user naumu https://naumu.ai/api/mcp`. Keep `--scope user`; without it the server is registered only for the current directory. Config is read at startup, so a new session is needed before `/mcp` lists it.
 - Cursor: add a remote MCP entry pointing at `https://naumu.ai/api/mcp` in the MCP settings - use the global `~/.cursor/mcp.json` so it applies to every project, rather than a repo-local `.cursor/mcp.json`; OAuth completes in the browser.
-- Codex: `codex mcp add naumu --transport http https://naumu.ai/api/mcp`. If the harness cannot complete browser OAuth, fall back to the API-key + stdio path (see Fallback).
+- Codex: `codex mcp add naumu --url https://naumu.ai/api/mcp`, then `codex mcp login naumu` to sign in in the browser; start a new session so the tools load. If the harness cannot complete browser OAuth, fall back to the API-key + stdio path (see Fallback).
 - Other harnesses: use the equivalent "add remote/HTTP MCP" command with the same URL.
 
 **Fallback (API key + stdio)** for harnesses without remote-OAuth: create a key in Naumu account settings and configure the stdio server:

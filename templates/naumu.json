@@ -1,7 +1,9 @@
 {
   "space": "<space-id>",
+  "slug": "<space-slug>",
   "tracking": {
-    "topic": "<topic-slug>",
+    "topic": "<topic-name>",
+    "topicId": "<topic-id>",
     "commitTrailer": true
   }
 }

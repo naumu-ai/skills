@@ -6,12 +6,13 @@ Source for the public `naumu-ai/skills` registry. What lives here is exported to
 npx skills add naumu-ai/skills
 ```
 
-That install ships two skills, `naumu` and `naumu-import`. The skill bodies are intentionally generic and public - no hardcoded team, space, or company. A repo opts in by committing two small artifacts (see `templates/`); the skills read them at runtime.
+That install ships three skills, `naumu`, `naumu-import` and `naumu-worklog`. The skill bodies are intentionally generic and public - no hardcoded team, space, or company. A repo opts in by committing two small artifacts (see `templates/`); the skills read them at runtime.
 
 ## The skills
 
 - **`naumu`** (daily loop + cold-connect) - the behavior in a repo that has a `.naumu` file. It runs the pre-task retrieval reflex, writes the work-log + `Naumu-Thread` commit trailer, and - in a cold clone with no MCP connected - makes the one-time offer to connect (per-harness MCP add, `naumu_resolve_admission`, seat-limit relay, decline marker). It does not create spaces or write `.naumu`.
 - **`naumu-import`** (one-off corpus import) - turns a folder or export (docs, ticket dumps with comment chains, images/video/PDF media) into structured content in the team's existing space. It surveys and triages before reading anything at scale, extends the space's schema rather than redesigning it, ingests in resumable chunks against a file-backed ledger, uploads and embeds media in the right notes and threads, and restructures only what it created. Built for corpora too large for one session; not a live sync - Naumu's built-in integrations cover continuous mirroring.
+- **`naumu-worklog`** (work log outside a repo) - the Claude desktop / web / Cowork counterpart of the `naumu` work-log loop (ChatGPT uses the same skill + memory setup; apps without skills get the same loop as memory / custom instructions, built by `WORK_LOG_INSTRUCTIONS_TEMPLATE` in `apps/web/.../helpers/agent-work-log.ts` - change the two together), for non-coding work (marketing, research, planning). It opens a work-log thread at the start of a work session, follows up on decisions and posts a summary when done. Its target (space id + topic id - the `.naumu` equivalent) is a placeholder line in the skill. The Your agents settings page fills it in and wraps the result in one setup prompt: the user pastes it into Claude, which saves the skill and a memory line that makes it open the skill before any work worth logging (skills alone under-trigger - a research request never reads as "log my work"). The generic copy falls back to the same line in Claude's memory or project instructions. It stands down when a repo's `.naumu` / AGENTS.md rule or a Naumu thread already owns logging, so installing it next to `naumu` never double-logs. The web app serves the template at `apps/web/public/downloads/naumu-worklog.md`, byte-identical to `skills/naumu-worklog/SKILL.md` (`agent-work-log.test.ts` fails on drift); keep the placeholder line exactly as the test expects. Setup: https://naumu.ai/docs/agent-work-log.
 
 Each skill states the minimum `@naumu/mcp` server version it needs in its SKILL.md. A referenced `naumu_*` tool missing from the connected server's tool list means the running server is stale - reconnect a remote server (`/mcp` in Claude Code, or restart the session) or update a local binary (`npm i -g @naumu/mcp@latest`), then reconnect.
 
@@ -26,6 +27,7 @@ skills-registry/
   skills/naumu/SKILL.md              the daily skill (read+write loop, cold-connect etiquette)
   skills/naumu/references/           loaded on demand: installation.md (the cold-connect procedure)
   skills/naumu-import/               the one-off corpus import skill (slim SKILL.md + references/)
+  skills/naumu-worklog/SKILL.md      the Claude desktop / web / Cowork work-log skill (served as naumu.ai/downloads/naumu-worklog.md)
   templates/naumu.json               the .naumu config template a repo commits
   templates/AGENTS-section.md        the ~4-line AGENTS.md pointer a repo commits
 ```
@@ -54,20 +56,24 @@ JSON cannot carry comments, so the fields are documented here:
 ```json
 {
   "space": "<space-id>",
+  "slug": "<space-slug>",
   "tracking": {
     "topic": "work-log",
+    "topicId": "<topic-id>",
     "commitTrailer": true
   }
 }
 ```
 
 - `space` - the target Naumu space id. This is an identifier, not a credential: forks, mirrors, and screenshots leak nothing. Admission to the space is identity-based (a git-history whitelist, admin domain wildcards, or a member-approved request-to-join), so a leaked space id grants no access.
-- `tracking.topic` - the topic work-log entries are filed under, as a kebab-case slug. The topic must already exist in the space; the quickstart prompt creates it during setup. `work-log` is what the Naumu team uses, but pick whatever name fits your space. Omit the whole `tracking` block to opt out of the write half and keep retrieval only.
+- `slug` - the space's URL slug (the segment after `/spaces/` on naumu.ai). Only used to compose the `Naumu-Thread:` commit trailer without an extra `naumu_list_graphs` call; the setup knows it when it writes the file.
+- `tracking.topic` - the human-readable name of the topic work-log entries are filed under, kebab-case. `work-log` is what the Naumu team uses, but pick whatever name fits your space. Omit the whole `tracking` block to opt out of the write half and keep retrieval only.
+- `tracking.topicId` - the id of that topic (`topic-...`, from `naumu_list_topics`). This is the field the agent actually passes as `topicIds` on the first `naumu_delegate` call: `naumu_delegate` files by id, never by name, and a thread created without `topicIds` lands in the space-wide `#misc` feed and can never be re-filed. The quickstart prompt creates the topic during setup and writes both fields. If an older `.naumu` has only `topic`, the skill resolves the id once via `naumu_list_topics` - add `topicId` to save every session that call.
 - `tracking.commitTrailer` - when `true` (the default), commits for a tracked task carry a `Naumu-Thread:` trailer linking the work-log thread, so `git blame` -> commit -> trailer leads a future teammate to the original reasoning.
 
 ### AGENTS.md section (from `templates/AGENTS-section.md`)
 
-Around four lines appended to the repo's `AGENTS.md`. AGENTS.md is the one file every coding harness reads unprompted, so it is the discovery vector. It is written as instructions, not description: search the space before a substantive task, record the work back when it is done, offer setup once and never auto-execute it, and install the behavior with `npx skills add naumu-ai/skills`. A harness that reads AGENTS.md without the skill installed still knows what to do.
+A short MANDATORY rule appended to the repo's `AGENTS.md`. AGENTS.md is the one file every coding harness reads unprompted, so it is the discovery vector. It is written as an imperative with the literal call shape, not a description: a descriptive sentence ("record the work back when done") was verified to never fire on a real customer repo - 27 threads, zero filed, zero commit trailers. The rule names three trigger points (start of a task, milestones such as decisions, pivots and blockers, and done), spells out `naumu_delegate` with `topicIds: [tracking.topicId]` on the first call and `threadId` on the rest, the `Naumu-Thread:` trailer, and the offer-once-never-auto-run setup. A harness that reads AGENTS.md without the skill installed still knows exactly what to call.
 
 ## Conventions in this registry
 

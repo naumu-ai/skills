@@ -42,15 +42,25 @@ Budget: this pre-task check must not block the task for more than about 5 second
 
 Do NOT use `naumu_ask` for the reflex. `naumu_ask` runs the full @Naumu agent and takes tens of seconds; it is for explicit user questions ("ask the team space whether we already solved X"), not the every-task preamble. Reserve it for when the user actually asks a question of the space.
 
-### Write: work-log on completion
+### Write: work-log at start, on milestones, and when done
 
-When a unit of work is done (or hits a milestone worth recording), post a short work-log entry into the space so reviewers and future agents can find it.
+This half is MANDATORY for any build, fix, refactor or feature task, and it fires three times, not once. A descriptive "record when done" instruction was verified on a real customer repo to never fire at all (27 threads, zero filed, zero trailers), so treat these as steps of the task, not as optional exhaust.
 
+1. **Start** - before the first code change, open the work-log thread: `naumu_delegate({ graphId: <.naumu space>, topicIds: [<.naumu tracking.topicId>], task: "Starting work: <2-3 bullets on what and why>" })`. Keep the returned `threadId` for the whole session.
+2. **Milestones** - on a decision, a pivot, a blocker or a scope change, post a follow-up: `naumu_delegate({ graphId, threadId, task: "<what changed and why>" })`.
+3. **Done** - post a bulleted summary of what changed into the same `threadId`, then add the commit trailer (below).
+
+Filing rules, in order of how often they were the reason nothing landed:
+
+- **`topicIds` is how filing happens.** `naumu_delegate` files by topic id, never by name: `.naumu` `tracking.topic` is a label for humans, `tracking.topicId` is what you pass. Without `topicIds` a new thread lands in the space-wide `#misc` feed and nobody watching the tracking topic sees it.
+- **Filing is a one-shot.** `topicIds` is honored only on the call that creates the thread and ignored once `threadId` is passed; no tool adds a topic to an existing thread. Get it right on the Start call.
+- If `.naumu` has `tracking.topic` but no `tracking.topicId` (older setups), call `naumu_list_topics` once, match the name, use that id, and suggest adding `topicId` to `.naumu`.
+- If the `tracking` block is absent, skip work-log writes entirely (the team opted out of the exhaust).
+- If you ever create the tracking topic yourself (no `.naumu` yet, or the topic is gone), pass `notifyOn: "people"` to `naumu_create_topic`: automated entries then stay silent for members until a person writes in a thread or tags someone, so the work log never spams the team.
 - The one rule: every work-log post must summon @Naumu, because only a summoned @Naumu commits the entry to the graph. A message that merely lands in the thread is not recorded (verified failure, 2026-08-18: four follow-up entries appended without a summon, zero graph writes). Work-log threads do not auto-respond by default, so never rely on that.
 - Two tools satisfy it: `naumu_delegate` (space id + bulleted task; summons @Naumu on its own) or `naumu_post_message` with `invokeAgent: true` (`threadId` + content). Either is fine; what matters is that the summon is on. If the connected server's `naumu_post_message` has no `invokeAgent` argument, it predates this skill - use `naumu_delegate` there.
-- First entry: `naumu_delegate` returns a `threadId`; reuse that same `threadId` for later updates on the same task rather than opening new threads.
 - Keep entries bulleted and short (one bullet per concrete change), never a wall of prose - a human scrolls these.
-- Honor `.naumu` `tracking.topic`: file the entry under that topic. If the `tracking` block is absent, skip work-log writes entirely (the team opted out of the exhaust).
+- Never block the task on Naumu: if a call fails, say so in one line and continue.
 
 Do not create graph nodes directly (`naumu_add_node` and friends) for tracking; hand mutations to `naumu_delegate`.
 
@@ -66,7 +76,7 @@ Body text.
 Naumu-Thread: https://naumu.ai/spaces/<slug>/chat/<threadId>
 ```
 
-Compose the URL from the space slug and the `threadId` returned by the first `naumu_delegate` call for this task. Keep any runtime attribution trailer (for example `Co-Authored-By:`) separate and below it. This is the trail a future teammate follows: `git blame` -> commit -> trailer -> the thread with the original reasoning. Reviewers whose own agent never connected still see the link in the PR - that is a second discovery surface, so it is worth keeping honest.
+Compose the URL from `.naumu` `slug` and the `threadId` returned by the Start call for this task. If `.naumu` has no `slug` (older setups), take it from `naumu_list_graphs` once and suggest adding it. Keep any runtime attribution trailer (for example `Co-Authored-By:`) separate and below it. This is the trail a future teammate follows: `git blame` -> commit -> trailer -> the thread with the original reasoning. Reviewers whose own agent never connected still see the link in the PR - that is a second discovery surface, so it is worth keeping honest.
 
 ---
 

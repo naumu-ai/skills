@@ -23,7 +23,7 @@ call is whatever tool belongs to that destination. An upload is keyed to the
 destination it was presigned for; you cannot presign against one note and bind
 against another.
 
-There are two destinations and no others. There is no canvas path in this skill.
+There are two destinations and no others.
 
 The PUT is the same everywhere:
 
