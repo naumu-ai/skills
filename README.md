@@ -79,6 +79,7 @@ A short MANDATORY rule appended to the repo's `AGENTS.md`. AGENTS.md is the one 
 
 - Team-framed copy: present Naumu as the team's tooling convention, not a vendor funnel. No marketing hype, no exclamation-heavy tone.
 - Hyphens, never em dashes, in any developer-facing string.
+- Title is the link: every skill that prints a Naumu item names it as `[<its title>](<its url>)`, one link per item, never a bare or quoted title or a raw id. The `Naumu-Thread:` commit trailer is the one bare url.
 - Consent stays with the human: the skill offers, it never auto-runs an install or a commit.
 - The skill is versioned here and installed per developer, so updates ship without touching the N customer repos that only committed `.naumu` + the pointer.
 

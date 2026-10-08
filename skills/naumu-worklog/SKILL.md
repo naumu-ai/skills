@@ -29,6 +29,7 @@ Done: October newsletter draft
 ```
 
 - Pass `topicIds` on the Start call only; later calls ignore it.
+- Name every Naumu item (thread, node, note) as `[<its title>](<its url>)`, one link each - never a bare or quoted title, never a raw id. Thread urls are `https://naumu.ai/spaces/<space id>/chat/<threadId>`; use a `url` the tool returns when it has one.
 - Keep entries short: outcomes and reasons, no secrets or personal data.
 - If a call says you are not a member of the space, call `naumu_resolve_admission({ graphId: <space id> })` once. If you joined, retry the entry. If it filed a join request, tell the user once that access was requested and to ask a space admin to approve it, then stop logging for this session.
 - If any other call fails, say so in one line and keep working.

@@ -36,7 +36,7 @@ Before starting a non-trivial task, run ONE fast scoped lookup against the space
 - Read the space id from `.naumu` (`space` field).
 - Use `naumu_search` with a query built from the task (feature name, file/module, symbols). It returns nodes by meaning, fast.
 - If a result points at a conversation worth the context, follow up with `naumu_read_thread` on that thread only.
-- Fold anything relevant (a prior decision, a gotcha, a linked ticket) into how you approach the task, and mention it to the user in one line.
+- Fold anything relevant (a prior decision, a gotcha, a linked ticket) into how you approach the task, and mention it to the user in one line, each item as `[<its title>](<its url>)` (naming rule below).
 
 Budget: this pre-task check must not block the task for more than about 5 seconds. `naumu_search` and a single `naumu_read_thread` fit that. If a call is slow or errors, drop it and start the work - never stall the task on retrieval.
 
@@ -116,3 +116,4 @@ Built against `@naumu/mcp` 0.10.0; the daily loop itself runs on 0.8.0 or newer,
 - Plain and calm: no marketing hype, no exclamation-heavy tone.
 - Hyphens, never em dashes.
 - Consent stays with the human: offer, never auto-execute an install or a commit.
+- Title is the link: every Naumu item you name to the user (thread, node, note, view, file, topic, space) is `[<its title>](<its url>)` - one link per item each time it is named, never a bare or quoted title, never a raw id, never a title plus a separate `([thread](url))`. Use the `url` a tool result carries; otherwise build `https://naumu.ai/spaces/<graphId>/nodes/<nodeId>` (or `/chat/<threadId>`, `/notes/<id>`, `/views/<id>`, `/files/<id>`). With no id, write the plain title. The `Naumu-Thread:` commit trailer stays a bare url.
